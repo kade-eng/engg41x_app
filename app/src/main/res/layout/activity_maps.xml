@@ -21,7 +21,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="end|top"
         android:layout_margin="16dp"
-        android:text="Launch Fragment"
-        android:elevation="4dp"/> <!-- Elevation to make sure the button appears above the map -->
+        android:elevation="4dp"
+        android:text="View Car" /> <!-- Elevation to make sure the button appears above the map -->
 
 </FrameLayout>
