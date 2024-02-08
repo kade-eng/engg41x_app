@@ -12,10 +12,14 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ENGG41x_nav_app"
         tools:targetApi="31">
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyBBoCNH1FTP-sVY1FCvAHyM8uur8-FP5CU" />
+
         <activity
-            android:name=".MainActivity"
+            android:name=".MapsActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.ENGG41x_nav_app">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
