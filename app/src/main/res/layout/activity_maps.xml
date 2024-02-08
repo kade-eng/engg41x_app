@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:id="@+id/map_container"
     tools:context=".MapsActivity"
     tools:layout="@layout/activity_maps">
 
@@ -20,7 +21,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="end|top"
         android:layout_margin="16dp"
-        android:text="Button Text"
+        android:text="Launch Fragment"
         android:elevation="4dp"/> <!-- Elevation to make sure the button appears above the map -->
 
 </FrameLayout>
