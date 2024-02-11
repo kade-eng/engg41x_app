@@ -1,14 +1,18 @@
 package com.example.engg41x_nav_app;
 
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.Manifest;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -17,9 +21,13 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.example.engg41x_nav_app.databinding.ActivityMapsBinding;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.FusedLocationProviderClient;
+
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -38,15 +46,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private GoogleMap mMap;
     private ActivityMapsBinding binding;
+    private  Marker userMarker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        //req perms
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
+        }
+
         binding = ActivityMapsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -67,12 +83,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public void onClick(View view) {
                 EditText destinationInput = findViewById(R.id.destination_input);
                 String destination = destinationInput.getText().toString();
-                //fetchDirections("your_origin_lat,your_origin_lng", destination);
-                fetchDirections("43.53007,-80.22566", "43.51807, -80.23904");
+                System.out.println("BEFORE SET LOC ");
+                setUserLoc(new UserLocationCallback() {
+                    @Override
+                    public void onLocationSet(LatLng userLocation) {
+                        String originStr = userLocation.latitude+","+userLocation.longitude;
+                        //fetchDirections("43.53007,-80.22566", destination);
+                        fetchDirections(originStr, "43.53007,-80.22566");
+                    }
+                });
+
+
             }
         });
-
     }
+
+
+
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
@@ -82,6 +109,33 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.addMarker(new MarkerOptions().position(sydney).title("Marker at UofG"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
     }
+
+    public void setUserLoc(UserLocationCallback callback) {
+        FusedLocationProviderClient fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            fusedLocationClient.getLastLocation()
+                    .addOnSuccessListener(this, location -> {
+                        if (location != null) {
+                            double latitude = location.getLatitude();
+                            double longitude = location.getLongitude();
+                            LatLng userLatLng = new LatLng(latitude, longitude);
+
+                            if (userMarker != null){
+                                userMarker.remove();
+                            }
+
+                            userMarker = mMap.addMarker(new MarkerOptions().position(userLatLng).title("User Location"));
+                            mMap.moveCamera(CameraUpdateFactory.newLatLng(userLatLng));
+                            System.out.println("HERE IS THE USER LOC12344444444: ");
+
+                            if (callback != null) {
+                                callback.onLocationSet(userLatLng);
+                            }
+                        }
+                    });
+        }
+    }
+
     private List<LatLng> decodePoly(String encoded) {
         List<LatLng> poly = new ArrayList<>();
         int index = 0, len = encoded.length();
@@ -132,6 +186,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void fetchDirections(String origin, String destination) {
+        System.out.println("HERE IS THE ORIGIN: " + origin);
+        System.out.println("HERE IS THE DEST: " + destination);
         new AsyncTask<String, Void, String>() {
             @Override
             protected String doInBackground(String... strings) {
