@@ -13,6 +13,21 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <EditText
+        android:id="@+id/destination_input"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:hint="Enter destination" />
+
+    <Button
+        android:id="@+id/btn_get_directions"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|top"
+        android:text="Get Directions" />
+
+
     <Button
         android:id="@+id/button_map_action"
         android:layout_width="wrap_content"
