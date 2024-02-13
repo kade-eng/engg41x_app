@@ -1,22 +1,25 @@
 package com.example.engg41x_nav_app;
 
-import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.fragment.app.FragmentActivity;
-
+import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
+import android.text.Html;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
-import android.Manifest;
+import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.FragmentActivity;
+
+import com.example.engg41x_nav_app.databinding.ActivityMapsBinding;
 import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -26,16 +29,12 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.example.engg41x_nav_app.databinding.ActivityMapsBinding;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.api.model.RectangularBounds;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
-
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -274,11 +273,36 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     final JSONObject json = new JSONObject(result);
                     JSONArray routes = json.getJSONArray("routes");
                     JSONObject route = routes.getJSONObject(0);
+
                     JSONObject polyline = route.getJSONObject("overview_polyline");
                     String encodedPolyline = polyline.getString("points");
                     List<LatLng> list = decodePoly(encodedPolyline);
                     // Draw the polyline on the map
                     runOnUiThread(() -> drawPolylineOnMap(list));
+
+                    //TRY GETTING ROUTES
+                    JSONArray legs = route.getJSONArray("legs");
+                    if (legs.length() > 0) {
+                        List<String> directionsList = new ArrayList<>();
+                        for (int i = 0; i < legs.length(); i++) {
+                            JSONArray steps = legs.getJSONObject(i).getJSONArray("steps");
+                            for (int j = 0; j < steps.length(); j++) {
+                                String htmlInstructions = steps.getJSONObject(j).getString("html_instructions");
+                                String distance = steps.getJSONObject(j).getJSONObject("distance").getString("text");
+                                directionsList.add(Html.fromHtml(htmlInstructions).toString() + " for " + distance);
+                            }
+                        }
+                        System.out.println("HERE ARE THE DIRECTIONS: " + directionsList.get(0).toString());
+                        runOnUiThread(() -> {
+                            TextView directionsTextView = findViewById(R.id.directionsTextView); // Assume you have this TextView in your layout
+                            String dirs = directionsList.get(0).toString()
+                                    .replace("\n"," ")
+                                    .replace("  "," ");
+                            System.out.println("HERE ARE THE DIRECTIONS: " + dirs);
+                            directionsTextView.setText(dirs);
+                        });
+                    }
+
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
