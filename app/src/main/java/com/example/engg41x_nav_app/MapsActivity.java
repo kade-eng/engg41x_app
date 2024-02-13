@@ -1,5 +1,6 @@
 package com.example.engg41x_nav_app;
 
+import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
@@ -9,11 +10,13 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.Manifest;
 
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -27,6 +30,10 @@ import com.example.engg41x_nav_app.databinding.ActivityMapsBinding;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.libraries.places.api.Places;
+import com.google.android.libraries.places.api.model.Place;
+import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
+import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 
 
 import org.json.JSONArray;
@@ -40,6 +47,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
@@ -47,6 +55,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleMap mMap;
     private ActivityMapsBinding binding;
     private  Marker userMarker;
+    private LatLng destination = new LatLng(0,0);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +67,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
+        }
+        if (!Places.isInitialized()) {
+            Places.initialize(getApplicationContext(), "AIzaSyBBoCNH1FTP-sVY1FCvAHyM8uur8-FP5CU");
         }
 
         binding = ActivityMapsBinding.inflate(getLayoutInflater());
@@ -77,19 +89,37 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
 
+        AutocompleteSupportFragment autocompleteFragment = (AutocompleteSupportFragment)
+                getSupportFragmentManager().findFragmentById(R.id.autocomplete_fragment);
+
+        autocompleteFragment.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.NAME, Place.Field.LAT_LNG));
+
+        autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+            @Override
+            public void onError(@NonNull Status status) {
+                System.out.println("ERROR NAVIGATING: " + status.getStatusMessage());
+            }
+
+            @Override
+            public void onPlaceSelected(@NonNull Place place) {
+                destination = place.getLatLng();
+                // Now you can use latLng or place.getName() to fetch directions or set a marker
+            }
+        });
+
+
         Button getDirectionsButton = findViewById(R.id.btn_get_directions);
         getDirectionsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                EditText destinationInput = findViewById(R.id.destination_input);
-                String destination = destinationInput.getText().toString();
-                System.out.println("BEFORE SET LOC ");
                 setUserLoc(new UserLocationCallback() {
                     @Override
                     public void onLocationSet(LatLng userLocation) {
                         String originStr = userLocation.latitude+","+userLocation.longitude;
+                        String destStr = destination.latitude+","+destination.longitude;
                         //fetchDirections("43.53007,-80.22566", destination);
-                        fetchDirections(originStr, "43.53007,-80.22566");
+                        //fetchDirections(originStr, "43.53007,-80.22566");
+                        fetchDirections(originStr, destStr);
                     }
                 });
 
@@ -105,9 +135,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
 
         //add uofg marker
-        LatLng sydney = new LatLng(43.53007, -80.22566);
+/*        LatLng sydney = new LatLng(43.53007, -80.22566);
         mMap.addMarker(new MarkerOptions().position(sydney).title("Marker at UofG"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));*/
     }
 
     public void setUserLoc(UserLocationCallback callback) {
@@ -126,7 +156,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                             userMarker = mMap.addMarker(new MarkerOptions().position(userLatLng).title("User Location"));
                             mMap.moveCamera(CameraUpdateFactory.newLatLng(userLatLng));
-                            System.out.println("HERE IS THE USER LOC12344444444: ");
 
                             if (callback != null) {
                                 callback.onLocationSet(userLatLng);
@@ -170,6 +199,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void drawPolylineOnMap(List<LatLng> list) {
+        mMap.clear();
+        mMap.addMarker(new MarkerOptions().position(destination).title("Destination"));
         PolylineOptions options = new PolylineOptions().width(10).color(Color.BLUE).geodesic(true);
         options.addAll(list);
         mMap.addPolyline(options);
