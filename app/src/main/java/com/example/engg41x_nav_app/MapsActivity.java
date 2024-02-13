@@ -32,6 +32,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.Place;
+import com.google.android.libraries.places.api.model.RectangularBounds;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 
@@ -72,6 +73,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             Places.initialize(getApplicationContext(), "AIzaSyBBoCNH1FTP-sVY1FCvAHyM8uur8-FP5CU");
         }
 
+        //map setup
         binding = ActivityMapsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
@@ -89,10 +91,26 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
 
+        //autocomplete setup
         AutocompleteSupportFragment autocompleteFragment = (AutocompleteSupportFragment)
                 getSupportFragmentManager().findFragmentById(R.id.autocomplete_fragment);
 
         autocompleteFragment.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.NAME, Place.Field.LAT_LNG));
+
+        //creating the zone bias
+        System.out.println("BEFORE SETTING BOUNDS");
+        setUserLoc(new UserLocationCallback() {
+            @Override
+            public void onLocationSet(LatLng userLocation) {
+                System.out.println("SETTING BOUNDS");
+                LatLngBounds bounds = new LatLngBounds(
+                        new LatLng(userLocation.latitude - 0.1, userLocation.longitude - 0.1),
+                        new LatLng(userLocation.latitude + 0.1, userLocation.longitude + 0.1));
+                autocompleteFragment.setLocationBias(RectangularBounds.newInstance(bounds));
+                System.out.println("BOUNDS SET TO: "+ bounds.toString());
+            }
+        });
+        System.out.println("AFTER SETTING BOUNDS");
 
         autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
             @Override
@@ -107,7 +125,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
 
-
+        //button setup
         Button getDirectionsButton = findViewById(R.id.btn_get_directions);
         getDirectionsButton.setOnClickListener(new View.OnClickListener() {
             @Override
