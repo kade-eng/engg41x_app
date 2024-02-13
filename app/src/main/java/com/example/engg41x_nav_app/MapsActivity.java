@@ -6,7 +6,9 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.Html;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -56,6 +58,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private ActivityMapsBinding binding;
     private  Marker userMarker;
     private LatLng destination = new LatLng(0,0);
+    private Handler mHandler = new Handler();
+    private Runnable mRunnable = new Runnable() {
+        @Override
+        public void run() {
+            updateDirections();
+            mHandler.postDelayed(this, 10000);
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -129,18 +139,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         getDirectionsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                setUserLoc(new UserLocationCallback() {
-                    @Override
-                    public void onLocationSet(LatLng userLocation) {
-                        String originStr = userLocation.latitude+","+userLocation.longitude;
-                        String destStr = destination.latitude+","+destination.longitude;
-                        //fetchDirections("43.53007,-80.22566", destination);
-                        //fetchDirections(originStr, "43.53007,-80.22566");
-                        fetchDirections(originStr, destStr);
-                    }
-                });
-
-
+                updateDirections();
+                mHandler.removeCallbacks(mRunnable);
+                mHandler.post(mRunnable);
             }
         });
     }
@@ -308,5 +309,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
             }
         }.execute(origin, destination);
+    }
+
+    private void updateDirections() {
+        System.out.println("UPDATING THE DIRECTIONS AGAIN! NICE!");
+        setUserLoc(new UserLocationCallback() {
+            @Override
+            public void onLocationSet(LatLng userLocation) {
+                String originStr = userLocation.latitude+","+userLocation.longitude;
+                String destStr = destination.latitude+","+destination.longitude;
+                fetchDirections(originStr, destStr);
+            }
+        });
     }
 }

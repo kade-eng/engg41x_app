@@ -8,7 +8,6 @@ public class CarActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Set the layout for CarActivity
         setContentView(R.layout.activity_car);
     }
 }
