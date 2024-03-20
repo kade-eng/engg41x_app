@@ -1,7 +1,13 @@
 package com.example.engg41x_nav_app;
 
 import android.Manifest;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.AsyncTask;
@@ -44,20 +50,31 @@ import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
     private ActivityMapsBinding binding;
-    private  Marker userMarker;
-    private LatLng destination = new LatLng(0,0);
+    private Marker userMarker;
+    private LatLng destination = new LatLng(0, 0);
+
+    // all bluetooth stuff
+    private static final int REQUEST_ENABLE_BT = 1;
+    private BluetoothAdapter bluetoothAdapter;
+    private BluetoothSocket bluetoothSocket;
+    private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
+    private static final String DEVICE_NAME = "raspberrypi";
     private Handler mHandler = new Handler();
     private Runnable mRunnable = new Runnable() {
         @Override
@@ -70,7 +87,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         //req perms
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
@@ -78,8 +94,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
         }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.BLUETOOTH_CONNECT}, 1);
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.BLUETOOTH_SCAN}, 1);
+        }
         if (!Places.isInitialized()) {
             Places.initialize(getApplicationContext(), "AIzaSyBBoCNH1FTP-sVY1FCvAHyM8uur8-FP5CU");
+        }
+
+        System.out.println("TESTTEST");
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        if (bluetoothAdapter == null) {
+            return;
+        } else if (!bluetoothAdapter.isEnabled()) {
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+        } else {
+            connectToPairedDevice();
         }
 
         //map setup
@@ -116,7 +149,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         new LatLng(userLocation.latitude - 0.1, userLocation.longitude - 0.1),
                         new LatLng(userLocation.latitude + 0.1, userLocation.longitude + 0.1));
                 autocompleteFragment.setLocationBias(RectangularBounds.newInstance(bounds));
-                System.out.println("BOUNDS SET TO: "+ bounds.toString());
+                System.out.println("BOUNDS SET TO: " + bounds.toString());
             }
         });
         System.out.println("AFTER SETTING BOUNDS");
@@ -130,7 +163,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onPlaceSelected(@NonNull Place place) {
                 destination = place.getLatLng();
-                // Now you can use latLng or place.getName() to fetch directions or set a marker
             }
         });
 
@@ -146,7 +178,70 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
     }
 
+    private void connectToPairedDevice() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        //connect to pi
+        Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
+        if (pairedDevices.size() > 0) {
+            for (BluetoothDevice device : pairedDevices) {
+                if (device.getName().equals(DEVICE_NAME)) {
+                    System.out.println("CONNECTION ESTABLISHED!!!!");
+                    connectToDevice(device);
+                    break;
+                } else {
+                    System.out.println("NO CONNECTION");
+                }
+            }
+        }
+    }
 
+    private void connectToDevice(BluetoothDevice device) {
+        try {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                return;
+            }
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+                return;
+            }
+            System.out.println("CREATING SOCKET");
+            bluetoothSocket = device.createRfcommSocketToServiceRecord(MY_UUID);
+            bluetoothAdapter.cancelDiscovery();
+            bluetoothSocket.connect();
+            System.out.println("SENDING DATA");
+            sendData("{\"key\": \"value\"}");
+        } catch (IOException e) {
+            System.out.println("ERROR CONNECTING TO DEVICE:" + e);
+        }
+    }
+
+    private void sendData(String data) {
+        if (bluetoothSocket != null) {
+            try {
+                OutputStream outputStream = bluetoothSocket.getOutputStream();
+                outputStream.write(data.getBytes());
+                System.out.println("WROTE DATA: " + data);
+            } catch (IOException e) {
+                System.out.println("ERROR SENDING DATA TO DEVICE:" + e);
+            }
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (bluetoothSocket != null) {
+            try {
+                bluetoothSocket.close();
+            } catch (IOException e) {
+                System.out.println("ERROR CLOSING SOCKET:" + e);
+            }
+        }
+    }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
@@ -281,26 +376,43 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     // Draw the polyline on the map
                     runOnUiThread(() -> drawPolylineOnMap(list));
 
-                    //TRY GETTING ROUTES
+                    // Process routes
                     JSONArray legs = route.getJSONArray("legs");
                     if (legs.length() > 0) {
                         List<String> directionsList = new ArrayList<>();
                         for (int i = 0; i < legs.length(); i++) {
                             JSONArray steps = legs.getJSONObject(i).getJSONArray("steps");
                             for (int j = 0; j < steps.length(); j++) {
-                                String htmlInstructions = steps.getJSONObject(j).getString("html_instructions");
-                                String distance = steps.getJSONObject(j).getJSONObject("distance").getString("text");
-                                directionsList.add(Html.fromHtml(htmlInstructions).toString() + " for " + distance);
+                                JSONObject step = steps.getJSONObject(j);
+                                String distance = step.getJSONObject("distance").getString("text");
+                                String instruction = step.getString("html_instructions");
+                                String maneuver = step.optString("maneuver", "");
+
+                                // Convert maneuver to more user-friendly instruction
+                                if (!maneuver.isEmpty()) {
+                                    if (maneuver.contains("left")) {
+                                        instruction = "Turn left in " + distance;
+                                    } else if (maneuver.contains("right")) {
+                                        instruction = "Turn right in " + distance;
+                                    } else {
+                                        // For other maneuvers or if you want more detail, adjust accordingly
+                                        instruction = Html.fromHtml(instruction).toString() + " for " + distance;
+                                    }
+                                } else {
+                                    // Fallback for steps without a maneuver specified
+                                    instruction = Html.fromHtml(instruction).toString() + " for " + distance;
+                                }
+                                directionsList.add(instruction);
                             }
                         }
-                        System.out.println("HERE ARE THE DIRECTIONS: " + directionsList.get(0).toString());
+                        System.out.println("HERE ARE THE DIRECTIONS: " + directionsList.get(1));
                         runOnUiThread(() -> {
                             TextView directionsTextView = findViewById(R.id.directionsTextView); // Assume you have this TextView in your layout
-                            String dirs = directionsList.get(0).toString()
-                                    .replace("\n"," ")
-                                    .replace("  "," ");
-                            System.out.println("HERE ARE THE DIRECTIONS: " + dirs);
-                            directionsTextView.setText(dirs);
+                            //String dirs = String.join("\n", directionsList)
+                                    //.replace("\n", " ")
+                                    //.replace("  ", " ");
+                            //System.out.println("HERE ARE THE DIRECTIONS: " + dirs);
+                            directionsTextView.setText(directionsList.get(1));
                         });
                     }
 
