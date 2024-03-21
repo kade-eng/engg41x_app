@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     android:id="@+id/map_container"
     tools:context=".CarActivity"
+    android:background="#FFFFFF"
     tools:layout="@layout/activity_car">
 
 
@@ -24,7 +25,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:background="#BDBDBD"
-        android:text="Make:    Hyundai\nModel:   Elantra\nYear:      2011"
+        android:text="   Make:       Hyundai\n\n   Model:      Elantra\n\n   Year:         2011"
         android:textColor="@android:color/black"
         android:textSize="21dp"
         android:padding="8dp"
@@ -34,14 +35,13 @@
         app:layout_constraintEnd_toEndOf="parent" />
 
     <ListView
-        android:id="@+id/mobile_list"
+        android:id="@+id/listView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#ededeb"
         app:layout_constraintTop_toBottomOf="@id/greyBox"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent">
+        app:layout_constraintEnd_toEndOf="parent">
     </ListView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

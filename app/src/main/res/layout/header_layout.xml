@@ -1,0 +1,26 @@
+<!-- header_layout.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#cfd0d1"
+    android:orientation="horizontal"
+    android:padding="16dp">
+
+    <TextView
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_weight="1"
+    android:text="Code"
+    android:textColor="#000000"
+    android:textSize="18sp"
+    android:gravity="center"/>
+
+    <TextView
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_weight="1"
+    android:text="Severity Level"
+    android:textColor="#000000"
+    android:textSize="18sp"
+    android:gravity="center"/>
+    </LinearLayout>
