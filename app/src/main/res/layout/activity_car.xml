@@ -9,7 +9,6 @@
     android:background="#FFFFFF"
     tools:layout="@layout/activity_car">
 
-
     <FrameLayout
         android:id="@+id/greyBox"
         android:layout_width="0dp"
@@ -37,11 +36,31 @@
     <ListView
         android:id="@+id/listView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:background="#ededeb"
         app:layout_constraintTop_toBottomOf="@id/greyBox"
+        app:layout_constraintBottom_toTopOf="@id/buttonContainer"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
     </ListView>
 
+    <FrameLayout
+        android:id="@+id/buttonContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#ededeb"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:padding="16dp">
+
+        <Button
+            android:id="@+id/mechanic"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Mechanic"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+    </FrameLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

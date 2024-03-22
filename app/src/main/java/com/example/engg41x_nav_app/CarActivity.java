@@ -1,11 +1,14 @@
 package com.example.engg41x_nav_app;
 
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.ArrayList;
@@ -22,9 +25,13 @@ public class CarActivity extends AppCompatActivity {
 
         listView = (ListView) findViewById(R.id.listView);
         items = new ArrayList<>();
-        items.add(new OBD("1", "High", "Detailed information here."));
-        items.add(new OBD("2", "Low", "Detailed information here."));
-        items.add(new OBD("3", "High", "Detailed information here."));
+        items.add(new OBD("P0301", "High", "Cylinder 1 Misfire Detected"));
+        items.add(new OBD("P0300", "Medium", "Random/Multiple Cylinder Misfire Detected"));
+        items.add(new OBD("P0138", "Medium", "O2 Sensor Circuit High Voltage (Bank 1, Sensor 2)"));
+        items.add(new OBD("P0440", "Low", "Evaporative Emission System"));
+        items.add(new OBD("P0455", "Low", "Evaporative Emission System Leak Detected (gross leak)"));
+        items.add(new OBD("P0141", "Low", "O2 Sensor Heater Circuit Malfunction (Bank 1, Sensor 2)"));
+
 
         adapter = new OBDAdapter(this, items);
 
@@ -40,5 +47,33 @@ public class CarActivity extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(), item.getDesc(), Toast.LENGTH_LONG).show();
             }
         });
+
+        Button mechButton = findViewById(R.id.mechanic);
+        mechButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showCallMechanicDialog();
+            }
+        });
+    }
+
+    private void showCallMechanicDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(CarActivity.this);
+        builder.setTitle("Call Mechanic");
+        builder.setMessage("Would you like to call your mechanic at (613)-342-4006?");
+        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                Toast.makeText(CarActivity.this, "Calling mechanic...", Toast.LENGTH_SHORT).show();
+                //actually implement call functionality
+            }
+        });
+        builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                Toast.makeText(CarActivity.this, "Cancelled", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
     }
 }
