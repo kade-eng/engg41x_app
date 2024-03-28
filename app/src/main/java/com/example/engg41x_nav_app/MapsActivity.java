@@ -75,14 +75,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private BluetoothSocket bluetoothSocket;
     private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
     private static final String DEVICE_NAME = "raspberrypi";
-    private Handler mHandler = new Handler();
-    private Runnable mRunnable = new Runnable() {
-        @Override
-        public void run() {
-            updateDirections();
-            mHandler.postDelayed(this, 10000);
-        }
-    };
+
+    private boolean connectionEstablished = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -172,8 +166,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onClick(View view) {
                 updateDirections();
-                mHandler.removeCallbacks(mRunnable);
-                mHandler.post(mRunnable);
             }
         });
     }
@@ -190,8 +182,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (pairedDevices.size() > 0) {
             for (BluetoothDevice device : pairedDevices) {
                 if (device.getName().equals(DEVICE_NAME)) {
+
                     System.out.println("CONNECTION ESTABLISHED!!!!");
                     connectToDevice(device);
+                    connectionEstablished = true;
                     break;
                 } else {
                     System.out.println("NO CONNECTION");
@@ -389,13 +383,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 String maneuver = step.optString("maneuver", "");
 
                                 // Convert maneuver to more user-friendly instruction
-                                if (!maneuver.isEmpty()) {
+                                if (!maneuver.isEmpty() ) {
                                     if (maneuver.contains("left")) {
                                         instruction = "Turn left in " + distance;
                                     } else if (maneuver.contains("right")) {
                                         instruction = "Turn right in " + distance;
                                     } else {
-                                        // For other maneuvers or if you want more detail, adjust accordingly
                                         instruction = Html.fromHtml(instruction).toString() + " for " + distance;
                                     }
                                 } else {
@@ -408,11 +401,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         System.out.println("HERE ARE THE DIRECTIONS: " + directionsList.get(1));
                         runOnUiThread(() -> {
                             TextView directionsTextView = findViewById(R.id.directionsTextView); // Assume you have this TextView in your layout
-                            //String dirs = String.join("\n", directionsList)
-                                    //.replace("\n", " ")
-                                    //.replace("  ", " ");
-                            //System.out.println("HERE ARE THE DIRECTIONS: " + dirs);
                             directionsTextView.setText(directionsList.get(1));
+
+                            String[] parts = directionsList.get(1).split(" ");
+                            String dist = parts[parts.length - 2] + " " + parts[parts.length - 1];
+                            System.out.println("HERE WE ARE YAY");
+                            System.out.println("parts[1]: " + parts[1]);
+                            if (connectionEstablished) {
+                                if (parts[1].equalsIgnoreCase("left")) {
+                                    System.out.println("{\"dir\":\"left\",\"dist\":\""+dist+"\"}");
+                                    sendData("{\"dir\":\"left\",\"dist\":\""+dist+"\"}");
+                                } else if (parts[1].equalsIgnoreCase("right")) {
+                                    System.out.println("{\"dir\":\"right\",\"dist\":\""+dist+"\"}");
+                                    sendData("{\"dir\":\"right\",\"dist\":\""+dist+"\"}");
+                                } else {
+                                    System.out.println("{\"dir\":\"forward\",\"dist\":\""+dist+"\"}");
+                                    sendData("{\"dir\":\"forward\",\"dist\":\""+dist+"\"}");
+                                }
+                            }
                         });
                     }
 
