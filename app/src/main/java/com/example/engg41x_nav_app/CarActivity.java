@@ -1,6 +1,8 @@
 package com.example.engg41x_nav_app;
 
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
@@ -60,11 +62,13 @@ public class CarActivity extends AppCompatActivity {
     private void showCallMechanicDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(CarActivity.this);
         builder.setTitle("Call Mechanic");
-        builder.setMessage("Would you like to call your mechanic at (613)-342-4006?");
+        builder.setMessage("Would you like to call your mechanic at (519)-635-6042?");
         builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
-                Toast.makeText(CarActivity.this, "Calling mechanic...", Toast.LENGTH_SHORT).show();
-                //actually implement call functionality
+                String number = "15196356042";
+                Uri call = Uri.parse("tel:" + number);
+                Intent surf = new Intent(Intent.ACTION_DIAL, call);
+                startActivity(surf);
             }
         });
         builder.setNegativeButton("No", new DialogInterface.OnClickListener() {

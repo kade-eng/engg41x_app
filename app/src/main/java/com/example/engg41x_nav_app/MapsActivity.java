@@ -68,6 +68,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private ActivityMapsBinding binding;
     private Marker userMarker;
     private LatLng destination = new LatLng(0, 0);
+    private LatLng userLoc = new LatLng(0, 0);
 
     // all bluetooth stuff
     private static final int REQUEST_ENABLE_BT = 1;
@@ -256,6 +257,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             double latitude = location.getLatitude();
                             double longitude = location.getLongitude();
                             LatLng userLatLng = new LatLng(latitude, longitude);
+                            userLoc = userLatLng;
 
                             if (userMarker != null){
                                 userMarker.remove();
@@ -308,6 +310,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void drawPolylineOnMap(List<LatLng> list) {
         mMap.clear();
         mMap.addMarker(new MarkerOptions().position(destination).title("Destination"));
+        mMap.addMarker(new MarkerOptions().position(userLoc).title("User Location"));
         PolylineOptions options = new PolylineOptions().width(10).color(Color.BLUE).geodesic(true);
         options.addAll(list);
         mMap.addPolyline(options);
@@ -435,6 +438,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onLocationSet(LatLng userLocation) {
                 String originStr = userLocation.latitude+","+userLocation.longitude;
+                userLoc = userLocation;
                 String destStr = destination.latitude+","+destination.longitude;
                 fetchDirections(originStr, destStr);
             }
