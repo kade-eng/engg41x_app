@@ -34,7 +34,6 @@ public class CarActivity extends AppCompatActivity {
         items.add(new OBD("P0455", "Low", "Evaporative Emission System Leak Detected (gross leak)"));
         items.add(new OBD("P0141", "Low", "O2 Sensor Heater Circuit Malfunction (Bank 1, Sensor 2)"));
 
-
         adapter = new OBDAdapter(this, items);
 
 
@@ -45,7 +44,7 @@ public class CarActivity extends AppCompatActivity {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                OBD item = items.get(position);
+                OBD item = items.get(position-1);
                 Toast.makeText(getApplicationContext(), item.getDesc(), Toast.LENGTH_LONG).show();
             }
         });
